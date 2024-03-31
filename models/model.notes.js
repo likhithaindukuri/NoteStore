@@ -21,7 +21,7 @@ const notesschema = new Schema({
     document_id:
     {
       type:String,
-      required:true,
+      required:null,
     },
     document_url:
     {
