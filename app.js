@@ -25,7 +25,7 @@ const password_db = require('./models/model.password');
 const notes_db = require('./models/model.notes');
 const dburl = process.env.DB_URL;
 mongoose
-  .connect(process.env.DB_URL, { useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true })
+  .connect(process.env.DB_UR, { useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true })
   .then(() => app.listen(port))
   .catch(err => console.log(err));
 
