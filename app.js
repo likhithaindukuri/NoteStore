@@ -25,7 +25,7 @@ const password_db = require('./models/model.password');
 const notes_db = require('./models/model.notes');
 const dburl = process.env.DB_URL;
 mongoose
-  .connect(process.env.DB_UR, { useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true })
+  .connect('mongodb+srv://likhithaindukuri07:likhi07@cluster0.dmnubbn.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0', { useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true })
   .then(() => app.listen(port))
   .catch(err => console.log(err));
 
@@ -43,7 +43,7 @@ app.use(express.json());
 app.use(morgan('dev'));
 app.use(
   session({
-    secret: 'gowtham',
+    secret: 'likhitha',
     resave: true,
     saveUninitialized: true,
   })
