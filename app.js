@@ -25,7 +25,7 @@ const password_db = require('./models/model.password');
 const notes_db = require('./models/model.notes');
 const dburl = process.env.DB_URL;
 mongoose
-  .connect('mongodb+srv://likhithaindukuri07:likhi07@cluster0.dmnubbn.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0', { useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true })
+  .connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true })
   .then(() => app.listen(port))
   .catch(err => console.log(err));
 
