@@ -1,5 +1,3 @@
-// app.js
-
 const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
@@ -160,19 +158,20 @@ app.get('/uploads/:docname', ensureAuthenticated, (req, res) => {
   const docName = req.params.docname;
 
   notes_db.findOne({ _id: docName, contributer_id: req.session.passport.user }, (err, note) => {
-    if (err) {
-      console.error('Error finding note:', err);
-      return res.status(500).send('Error finding note.');
-    }
+      if (err) {
+          console.error('Error finding note:', err);
+          return res.status(500).send('Error finding note.');
+      }
 
-    if (!note) {
-      return res.status(404).send('Note not found.');
-    }
+      if (!note) {
+          return res.status(404).send('Note not found.');
+      }
 
-    res.contentType("application/pdf");
-    res.send(note.document_data);
+      res.contentType("application/pdf");
+      res.send(note.document_data);
   });
 });
+
 
 // 404 handler
 app.use((req, res) => {
