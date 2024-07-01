@@ -1,3 +1,5 @@
+// app.js
+
 const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
@@ -7,36 +9,31 @@ const passport = require('passport');
 const { ensureAuthenticated } = require('./auth');
 require('./passport')(passport);
 const memberRoutes = require('./routes/memberroutes');
-const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
 require('dotenv').config();
-
 const morgan = require('morgan');
 const flash = require('connect-flash');
-// const mailgun = require('mailgun-js');
-// console.log(process.env);
+const fs = require('fs');
+const multer = require('multer');
+const upload = multer(); 
 
-//Express App
+// Express App
 const app = express();
 const port = process.env.PORT || 3000;
 
-//Data Base
+// Data Base
 const password_db = require('./models/model.password');
 const notes_db = require('./models/model.notes');
-const dburl = process.env.DB_URL;
+
 mongoose
   .connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true })
   .then(() => app.listen(port))
   .catch(err => console.log(err));
 
-//View Engine
+// View Engine
 app.set('view engine', 'ejs');
 
-//Multer
-const multer = require('multer');
-const upload = multer({ dest: 'uploads/' }); // Storing files directly in the 'uploads' directory
-
-//Static , Password , Middleware
+// Static , Password , Middleware
 app.use(express.static('public'));
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.json());
@@ -93,36 +90,41 @@ app.post('/register', (req, res) => {
 });
 
 app.get('/logout', (req, res) => {
-  req.logout();
-  res.redirect('/');
+  req.logout(function(err) {
+    if (err) {
+      console.error('Error logging out:', err);
+      return next(err);
+    }
+    req.flash('success_msg', 'You are logged out'); 
+    res.redirect('/login'); 
+  });
 });
 
 // Adding Notes
 app.post("/newnotes", ensureAuthenticated, upload.single('doc'), (req, res) => {
   const file = req.file;
   if (!file) {
-      return res.status(400).send('No file uploaded.');
+    return res.status(400).send('No file uploaded.');
   }
 
   const newNote = new notes_db({
-      title: req.body.title,
-      type: req.body.type,
-      domain: req.body.domain,
-      contributer_id: req.session.passport.user,
-      // Set document_id to null since we're not using Google Drive API
-      document_id: null,
-      document_url: '/uploads/' + file.filename, // Construct the URL to access the file
+    title: req.body.title,
+    type: req.body.type,
+    domain: req.body.domain,
+    contributer_id: req.session.passport.user,
+    document_data: file.buffer, 
   });
 
   newNote.save()
-      .then(note => {
-          res.redirect('/');
-      })
-      .catch(err => {
-          console.error('Error saving note:', err);
-          res.status(500).send('Error saving note.');
-      });
+    .then(note => {
+      res.redirect('/');
+    })
+    .catch(err => {
+      console.error('Error saving note:', err);
+      res.status(500).send('Error saving note.');
+    });
 });
+
 // Delete Note Route
 app.delete('/:id', ensureAuthenticated, (req, res) => {
   const user_id = req.session.passport.user;
@@ -134,16 +136,7 @@ app.delete('/:id', ensureAuthenticated, (req, res) => {
         // Delete note from the database
         notes_db.findByIdAndDelete(notes_id)
           .then(() => {
-            // Delete the corresponding file from the server
-            const filePath = `public${result.document_url}`;
-            fs.unlink(filePath, (err) => {
-              if (err) {
-                console.error('Error deleting file:', err);
-                res.status(500).json({ error: 'Error deleting file.' });
-              } else {
-                res.json({ redirect: '/' });
-              }
-            });
+            res.json({ redirect: '/' });
           })
           .catch(err => {
             console.error('Error deleting note:', err);
@@ -159,22 +152,25 @@ app.delete('/:id', ensureAuthenticated, (req, res) => {
     });
 });
 
-
 // Member Notes
 app.use('/', memberRoutes);
-// Serve PDF files
-app.get('/uploads/:docname', (req, res) => {
-  var file_name = req.params.docname;
-  var render_file = "/uploads/" + (file_name);
 
-  fs.readFile(__dirname + render_file, function (err, data) {
+// Serve PDF files from the database
+app.get('/uploads/:docname', ensureAuthenticated, (req, res) => {
+  const docName = req.params.docname;
+
+  notes_db.findOne({ _id: docName, contributer_id: req.session.passport.user }, (err, note) => {
     if (err) {
-      console.error('Error reading file:', err);
-      res.status(500).send('Error reading file.');
-    } else {
-      res.contentType("application/pdf");
-      res.send(data);
+      console.error('Error finding note:', err);
+      return res.status(500).send('Error finding note.');
     }
+
+    if (!note) {
+      return res.status(404).send('Note not found.');
+    }
+
+    res.contentType("application/pdf");
+    res.send(note.document_data);
   });
 });
 
