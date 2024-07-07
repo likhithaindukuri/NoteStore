@@ -5,7 +5,7 @@
 }
 .navhome
 {
-    background-color: #ff9900;
+    background-color: #05aa9f;
 }
 .navbrand
 {
@@ -29,7 +29,7 @@
     font-size: large;
     text-transform: capitalize;
     transition: 5ms;
-    background-color: #ff9900;
+    background-color: #05aa9f;
 
 }
 .navkey:hover
